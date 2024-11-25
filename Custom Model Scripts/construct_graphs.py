@@ -74,7 +74,7 @@ for slide_id, group in df.groupby('slide_id'):
                 node_id2 = node_ids[neighbor_idx]
                 G.add_edge(node_id1, node_id2)
 
-    # Output the number of nodes and edges
+    # Output number of nodes and edges
     num_nodes = G.number_of_nodes()
     num_edges = G.number_of_edges()
 
