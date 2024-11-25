@@ -38,7 +38,7 @@ with torch.no_grad():
 # Concatenate features
 features = torch.cat(features, dim=0).numpy()
 
-# Create a DataFrame to store features and patch information
+# Create a DataFrame to store features and patch info
 df = pd.DataFrame(features)
 df['patch_path'] = patch_info
 
