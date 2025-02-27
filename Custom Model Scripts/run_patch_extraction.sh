@@ -11,16 +11,14 @@
 # Load required modules
 ml jupyter/6.5.4
 
-# Get input type (BCC or SCC)
-TYPE=$1
-if [[ "$TYPE" != "BCC" && "$TYPE" != "SCC" ]]; then
-  echo "Please specify either BCC or SCC as the first argument."
+if [ "$#" -ne 2 ]; then
+  echo "Error: format ./run_patch_extraction.sh INPUTDIR OUTPUTDIR"
   exit 1
 fi
 
-# Set directories based on input type
-RAW_DIR="/home/francokrepel/blue/vabfmc/data/working/d.uriartediaz/francokrepel/project-root/data/raw/AN_Batch_*_${TYPE}"
-PATCH_DIR="/home/francokrepel/blue/vabfmc/data/working/d.uriartediaz/francokrepel/project-root/data/patches/$TYPE"
+RAW_DIR=$1
+PATCH_DIR=$2
+
 
 # Create output directory if it doesn't exist
 mkdir -p "$PATCH_DIR"
