@@ -1,4 +1,4 @@
-import os
+import os, sys
 import cv2
 import openslide
 from PIL import Image
@@ -81,3 +81,13 @@ def extract_patches(slide_path, output_dir, patch_size=224, magnification_factor
                 patch.save(os.path.join(slide_output_dir, filename))
 
     print("All tissue patches have been saved.")
+
+if __name__ == "__main__":
+    # Check if both dirs are provided
+    if len(sys.argv) != 3:
+        print("Usage: python script_name.py <raw_dir> <patch_output_dir>")
+        sys.exit(1)
+
+    raw_dir = sys.argv[1]
+    patch_dir = sys.argv[2]
+    extract_patches(raw_dir, patch_dir)

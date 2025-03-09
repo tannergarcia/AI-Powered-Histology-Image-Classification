@@ -59,7 +59,7 @@ def process_subfolder(subfolder_name, base_dir, output_dir_1792, original_width,
         max_dimension = 1792
         scaling_factor = min(max_dimension / island_image.width, max_dimension / island_image.height)
         new_width, new_height = int(island_image.width * scaling_factor), int(island_image.height * scaling_factor)
-        island_image_resized = island_image.resize((new_width, new_height), Image.ANTIALIAS)
+        island_image_resized = island_image.resize((new_width, new_height), Image.LANCZOS)
 
         final_image = Image.new('RGB', (1792, 1792), (255, 255, 255))
         paste_x, paste_y = (1792 - new_width) // 2, (1792 - new_height) // 2
@@ -69,24 +69,24 @@ def process_subfolder(subfolder_name, base_dir, output_dir_1792, original_width,
 
     print(f"Finished processing {subfolder_name}")
 
-def reconstruct_islands_in_directory(base_dir):
+def reconstruct_islands_in_directory(base_dir, output_dir):
     start_time = time.time()
     original_width = 22315
     original_height = 51186
     patch_size = 224
 
-    output_dir_1792 = '1792x1792_batch7'
-    os.makedirs(output_dir_1792, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
 
     subfolder_names = [subfolder for subfolder in os.listdir(base_dir) if os.path.isdir(os.path.join(base_dir, subfolder))]
-    args = [(subfolder, base_dir, output_dir_1792, original_width, original_height, patch_size) for subfolder in subfolder_names]
+    args = [(subfolder, base_dir, output_dir, original_width, original_height, patch_size) for subfolder in subfolder_names]
 
-    with Pool(processes=64) as pool:  # Explicitly set to use 64 cores
+    with Pool(processes=16) as pool:  # Explicitly set to use 64 cores
         pool.starmap(process_subfolder, args)
 
     total_execution_time = time.time() - start_time
     print(f"All images processed successfully. Total Execution Time: {total_execution_time:.2f} seconds")
 
 if __name__ == "__main__":
-    base_directory = "/home/d.uriartediaz/vabfmc/data/working/d.uriartediaz/francokrepel/project-root/data/patches/AN_Batch_04.29.22_BCC2020"
-    reconstruct_islands_in_directory(base_directory)
+    base_dir = "/blue/vabfmc/data/working/tannergarcia/DermHisto/data/SCC/patches/AN_Batch_02.09.22_2020"
+    output_dir = "/blue/vabfmc/data/working/tannergarcia/DermHisto/data/SCC/1792x1792/AN_Batch_02.09.22_2020"
+    reconstruct_islands_in_directory(base_dir, output_dir)

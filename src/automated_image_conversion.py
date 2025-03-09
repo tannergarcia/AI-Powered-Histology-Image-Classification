@@ -1,8 +1,18 @@
 import openslide
 import os
+import sys
+
+
+if len(sys.argv) < 3:
+  print("Usage: python automated_image_conversion.py {INPUT_DIR} {OUTPUT_DIR}")
+  sys.exit(1)
 
 # Directory containing the .mrxs files
-dir_path = 'AN_Batch_01.28.22_2020_SCC'
+dir_path = sys.argv[1]
+
+# Directory to output pngs
+out_path = sys.argv[2]
+
 # Output file for logging failures
 log_file = 'conversion_failures.txt'
 
@@ -32,11 +42,10 @@ with open(log_file, 'w') as log:
                 image = image.convert("RGB")
 
                 # Save the image as PNG
-                output_image_path = f"{filename.replace('.mrxs', '')}_output_image.png"
+                output_image_path = f"{out_path}{filename.replace('.mrxs', '')}.png"
                 image.save(output_image_path)
 
                 print(f"Successfully converted {filename} to {output_image_path}")
-
             except Exception as e:
                 # If an error occurs, log it and continue
                 error_message = f"Failed to convert {filename}: {str(e)}\n"

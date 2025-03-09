@@ -9,7 +9,6 @@
 #SBATCH --cpus-per-task=4
 
 # Load required modules
-ml jupyter/6.5.4
 
 if [ "$#" -ne 2 ]; then
   echo "Error: format ./run_patch_extraction.sh INPUTDIR OUTPUTDIR"
@@ -47,8 +46,8 @@ for slide_path in ${RAW_DIR}/*.mrxs; do
 #SBATCH --cpus-per-task=4
 
 # Run patch extraction for this slide
-python -c "
-from src.data_processing.tile_extraction import extract_patches
+/blue/vabfmc/data/working/tannergarcia/DermHisto/conda/envs/image_splitting/bin/python -c "
+from tile_extraction import extract_patches
 extract_patches('${slide_path}', '${PATCH_DIR}')
 "
 EOT
