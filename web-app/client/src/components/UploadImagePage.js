@@ -4,63 +4,114 @@ import { Upload, ArrowLeft, ImageIcon } from 'lucide-react';
 import axios from 'axios';
 
 const UploadImagePage = () => {
-  const [dragActive, setDragActive] = useState(false);
-  const [fileSelected, setFileSelected] = useState(false);
-  const [isUploading, setIsUploading] = useState(false); // Added to manage upload state
+  // ---------------- BCC State ----------------
+  const [bccDragActive, setBccDragActive] = useState(false);
+  const [bccFileSelected, setBccFileSelected] = useState(false);
+  const [isUploadingBcc, setIsUploadingBcc] = useState(false);
+
+  // ---------------- SCC State ----------------
+  const [sccDragActive, setSccDragActive] = useState(false);
+  const [sccFileSelected, setSccFileSelected] = useState(false);
+  const [isUploadingScc, setIsUploadingScc] = useState(false);
+
   const navigate = useNavigate();
 
-  const handleDrag = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
+  // ---------------- Common Handlers ----------------
+  const handleDrag = (event, setDragActive) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.type === 'dragenter' || event.type === 'dragover') {
       setDragActive(true);
     } else {
       setDragActive(false);
     }
   };
 
-  const handleDrop = async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragActive(false);
-    const file = e.dataTransfer.files[0];
+  // ---------------- BCC Handlers ----------------
+  const handleBccDrop = async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setBccDragActive(false);
+
+    const file = event.dataTransfer.files[0];
     if (file && file.type.startsWith('image/')) {
-      setFileSelected(true);
-      await uploadFile(file);
+      setBccFileSelected(true);
+      await uploadBccFile(file);
     }
   };
 
-  const handleFileChange = async (e) => {
-    const file = e.target.files[0];
+  const handleBccFileChange = async (event) => {
+    const file = event.target.files[0];
     if (file && file.type.startsWith('image/')) {
-      setFileSelected(true);
-      await uploadFile(file);
+      setBccFileSelected(true);
+      await uploadBccFile(file);
     }
   };
 
-  const uploadFile = async (file) => {
-    setIsUploading(true);
+  const uploadBccFile = async (file) => {
+    setIsUploadingBcc(true);
     try {
       const formData = new FormData();
       formData.append('file', file);
 
-      // Send the image to the backend
-      const response = await axios.post('http://localhost:5001/upload', formData);
+      // Send the BCC image to the backend
+      const response = await axios.post('http://localhost:5001/upload-bcc', formData);
 
-      // Navigate to SelectImagePage with the list of islands
+      // Navigate to SelectImagePage (or wherever you want) with the list of islands
       navigate('/select-image', { state: { islands: response.data.islands } });
     } catch (error) {
-      console.error('Error uploading file:', error);
-      setFileSelected(false);
+      console.error('Error uploading BCC file:', error);
+      setBccFileSelected(false);
       // Handle error (e.g., show a message to the user)
     } finally {
-      setIsUploading(false);
+      setIsUploadingBcc(false);
+    }
+  };
+
+  // ---------------- SCC Handlers ----------------
+  const handleSccDrop = async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setSccDragActive(false);
+
+    const file = event.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      setSccFileSelected(true);
+      await uploadSccFile(file);
+    }
+  };
+
+  const handleSccFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (file && file.type.startsWith('image/')) {
+      setSccFileSelected(true);
+      await uploadSccFile(file);
+    }
+  };
+
+  const uploadSccFile = async (file) => {
+    setIsUploadingScc(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Send the SCC image to the backend
+      const response = await axios.post('http://localhost:5001/upload-scc', formData);
+
+      // Navigate to SelectImagePage (or wherever you want) with the list of islands
+      navigate('/select-image', { state: { islands: response.data.islands } });
+    } catch (error) {
+      console.error('Error uploading SCC file:', error);
+      setSccFileSelected(false);
+      // Handle error (e.g., show a message to the user)
+    } finally {
+      setIsUploadingScc(false);
     }
   };
 
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
-      {/* Animated background (same as WelcomePage) */}
+      {/* Animated background (same as your original) */}
       <div className="fixed inset-0 bg-black">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-900 via-purple-900 to-blue-900 opacity-30 animate-gradient-x" />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black to-black opacity-80" />
@@ -77,7 +128,7 @@ const UploadImagePage = () => {
         </div>
       </div>
 
-      {/* Content */}
+      {/* Main content */}
       <div className="relative min-h-screen backdrop-blur-xl flex flex-col">
         {/* Navigation Bar */}
         <nav className="absolute top-0 left-0 right-0 flex items-center justify-between p-6">
@@ -91,28 +142,31 @@ const UploadImagePage = () => {
           <div className="text-gray-300 font-medium">Gator Vision</div>
         </nav>
 
-        <div className="flex-1 flex items-center justify-center px-4 py-24">
+        <div className="flex-1 flex flex-col items-center justify-center px-4 py-24">
           <div className="max-w-5xl w-full">
             <h2 className="text-5xl sm:text-6xl lg:text-7xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 animate-gradient-text bg-clip-text text-transparent text-center mb-12 py-2">
-              Upload Pathology Slide
+              Upload Pathology Slides
             </h2>
 
-            <div className="relative">
+            {/* ---------- BCC Upload ---------- */}
+            <div className="mb-16">
+              <h3 className="text-3xl font-semibold text-center mb-6">
+                BCC (Basal Cell Carcinoma)
+              </h3>
               <div
-                className={`
-                  border-2 border-dashed rounded-3xl p-16 transition-all duration-300 relative
-                  ${dragActive || fileSelected
+                className={`border-2 border-dashed rounded-3xl p-16 transition-all duration-300 relative
+                  ${bccDragActive || bccFileSelected
                     ? 'border-blue-400 bg-blue-500/10'
                     : 'border-gray-700 hover:border-gray-600'}
                 `}
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
+                onDragEnter={(e) => handleDrag(e, setBccDragActive)}
+                onDragLeave={(e) => handleDrag(e, setBccDragActive)}
+                onDragOver={(e) => handleDrag(e, setBccDragActive)}
+                onDrop={handleBccDrop}
               >
                 <div className="flex flex-col items-center justify-center gap-8">
                   <div className="w-24 h-24 rounded-full bg-blue-500/10 flex items-center justify-center">
-                    {fileSelected ? (
+                    {bccFileSelected ? (
                       <ImageIcon className="w-12 h-12 text-blue-400 animate-pulse" />
                     ) : (
                       <Upload className="w-12 h-12 text-blue-400" />
@@ -121,10 +175,10 @@ const UploadImagePage = () => {
 
                   <div className="text-center">
                     <p className="text-2xl text-gray-300 mb-3">
-                      {fileSelected ? 'Processing...' : 'Drag and drop your slide image here'}
+                      {bccFileSelected ? 'Processing...' : 'Drag and drop your BCC slide here'}
                     </p>
                     <p className="text-lg text-gray-400">
-                      {fileSelected
+                      {bccFileSelected
                         ? 'Please wait while we process your image.'
                         : 'or click to browse'}
                     </p>
@@ -133,27 +187,83 @@ const UploadImagePage = () => {
                   <input
                     type="file"
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    onChange={handleFileChange}
+                    onChange={handleBccFileChange}
                     accept="image/*"
-                    disabled={isUploading} // Disable input during upload
+                    disabled={isUploadingBcc}
                   />
                 </div>
               </div>
             </div>
 
-            <div className="mt-10 text-center space-y-3">
-              <p className="text-lg text-gray-400">Supported formats: Single-image slide or Multi-image slide with multiple depths/sections (PNG)</p>
+            {/* ---------- SCC Upload ---------- */}
+            <div className="mb-16">
+              <h3 className="text-3xl font-semibold text-center mb-6">
+                SCC (Squamous Cell Carcinoma)
+              </h3>
+              <div
+                className={`border-2 border-dashed rounded-3xl p-16 transition-all duration-300 relative
+                  ${sccDragActive || sccFileSelected
+                    ? 'border-blue-400 bg-blue-500/10'
+                    : 'border-gray-700 hover:border-gray-600'}
+                `}
+                onDragEnter={(e) => handleDrag(e, setSccDragActive)}
+                onDragLeave={(e) => handleDrag(e, setSccDragActive)}
+                onDragOver={(e) => handleDrag(e, setSccDragActive)}
+                onDrop={handleSccDrop}
+              >
+                <div className="flex flex-col items-center justify-center gap-8">
+                  <div className="w-24 h-24 rounded-full bg-blue-500/10 flex items-center justify-center">
+                    {sccFileSelected ? (
+                      <ImageIcon className="w-12 h-12 text-blue-400 animate-pulse" />
+                    ) : (
+                      <Upload className="w-12 h-12 text-blue-400" />
+                    )}
+                  </div>
+
+                  <div className="text-center">
+                    <p className="text-2xl text-gray-300 mb-3">
+                      {sccFileSelected ? 'Processing...' : 'Drag and drop your SCC slide here'}
+                    </p>
+                    <p className="text-lg text-gray-400">
+                      {sccFileSelected
+                        ? 'Please wait while we process your image.'
+                        : 'or click to browse'}
+                    </p>
+                  </div>
+
+                  <input
+                    type="file"
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    onChange={handleSccFileChange}
+                    accept="image/*"
+                    disabled={isUploadingScc}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="text-center space-y-3">
+              <p className="text-lg text-gray-400">
+                Supported formats: PNG/JPG single-image slides or multi-image slides with multiple depths/sections
+              </p>
               <p className="text-lg text-gray-400">Maximum file size: 20MB</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Loading Overlay */}
-      {isUploading && (
+      {/* Loading Overlays */}
+      {isUploadingBcc && (
         <div className="fixed inset-0 z-20 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center">
           <div className="animate-spin w-16 h-16 border-4 border-blue-400 border-t-transparent rounded-full mb-8" />
-          <p className="text-2xl text-gray-300">Uploading your image...</p>
+          <p className="text-2xl text-gray-300">Uploading your BCC image...</p>
+        </div>
+      )}
+
+      {isUploadingScc && (
+        <div className="fixed inset-0 z-20 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center">
+          <div className="animate-spin w-16 h-16 border-4 border-blue-400 border-t-transparent rounded-full mb-8" />
+          <p className="text-2xl text-gray-300">Uploading your SCC image...</p>
         </div>
       )}
     </div>
