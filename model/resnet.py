@@ -73,7 +73,7 @@ total_batch_size = 16
 
 # Paths to your CSV and image directories
 bcc_labels_path = '/blue/vabfmc/data/working/tannergarcia/DermHisto/data/SCC/Csv_parsed.csv'
-slides_dir = '/blue/vabfmc/data/working/tannergarcia/DermHisto/data/SCC/1792x1792/'
+slides_dir = '/blue/vabfmc/data/working/tannergarcia/DermHisto/data/SCC/1792x1792_fixed_size/'
 
 # Load labels
 bcc_labels_df = pd.read_csv(bcc_labels_path)
@@ -404,4 +404,95 @@ history = model.fit(
     use_multiprocessing=False
 )
 
+# ========================
+# Model Evaluation- NO DISPLAY
+# ========================
 
+from sklearn.metrics import classification_report, confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load the best model
+model.load_weights("HiResNet_best.h5")
+
+# Evaluate on the test set
+test_loss, test_accuracy = model.evaluate(test_generator, steps=test_steps)
+print(f"Test Loss: {test_loss}")
+print(f"Test Accuracy: {test_accuracy}")
+
+# Generate predictions
+test_generator.reset()
+Y_pred = model.predict(test_generator, steps=test_steps)
+y_pred = (Y_pred > 0.5).astype(int).flatten()
+y_true = test_generator.classes[:len(y_pred)]
+
+# Classification report
+print(classification_report(y_true, y_pred, target_names=['Non-Cancerous', 'Cancerous']))
+
+# Confusion matrix
+conf_matrix = confusion_matrix(y_true, y_pred)
+print("Confusion Matrix:")
+print(conf_matrix)
+
+# Plot confusion matrix
+plt.figure(figsize=(6,5))
+sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues',
+            xticklabels=['Non-Cancerous', 'Cancerous'],
+            yticklabels=['Non-Cancerous', 'Cancerous'])
+plt.ylabel('Actual')
+plt.xlabel('Predicted')
+plt.title('Confusion Matrix')
+plt.savefig("confusion_matrix.png")
+
+# Plot training history
+def plot_history(history):
+    # Plot accuracy
+    plt.figure(figsize=(15, 10))
+    plt.subplot(2, 2, 1)
+    plt.plot(history.history['accuracy'], label='Train Accuracy')
+    plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+    plt.title('Accuracy over Epochs')
+    plt.xlabel('Epoch')
+    plt.ylabel('Accuracy')
+    plt.legend()
+
+    # Plot loss
+    plt.subplot(2, 2, 2)
+    plt.plot(history.history['loss'], label='Train Loss')
+    plt.plot(history.history['val_loss'], label='Validation Loss')
+    plt.title('Loss over Epochs')
+    plt.xlabel('Epoch')
+    plt.ylabel('Loss')
+    plt.legend()
+
+    # Plot AUC
+    plt.subplot(2, 2, 3)
+    plt.plot(history.history['auc'], label='Train AUC')
+    plt.plot(history.history['val_auc'], label='Validation AUC')
+    plt.title('AUC over Epochs')
+    plt.xlabel('Epoch')
+    plt.ylabel('AUC')
+    plt.legend()
+
+    # Plot Precision
+    plt.subplot(2, 2, 4)
+    plt.plot(history.history['precision'], label='Train Precision')
+    plt.plot(history.history['val_precision'], label='Validation Precision')
+    plt.title('Precision over Epochs')
+    plt.xlabel('Epoch')
+    plt.ylabel('Precision')
+    plt.legend()
+
+    # Plot Recall
+    plt.figure(figsize=(7, 5))
+    plt.plot(history.history['recall'], label='Train Recall')
+    plt.plot(history.history['val_recall'], label='Validation Recall')
+    plt.title('Recall over Epochs')
+    plt.xlabel('Epoch')
+    plt.ylabel('Recall')
+    plt.legend()
+
+    plt.tight_layout()
+    plt.savefig("history.png")
+
+plot_history(history)
