@@ -88,5 +88,7 @@ def reconstruct_islands_in_directory(base_dir, output_dir):
 
 if __name__ == "__main__":
     base_dir = "/blue/vabfmc/data/working/tannergarcia/DermHisto/data/SCC/patches/AN_Batch_02.09.22_2020"
-    output_dir = "/blue/vabfmc/data/working/tannergarcia/DermHisto/data/SCC/1792x1792/AN_Batch_02.09.22_2020"
+    output_dir = "/blue/vabfmc/data/working/tannergarcia/DermHisto/data/SCC/1792x1792_fixed_size"
+    print(f"Input dir: {base_dir}")
+    print(f"Output dir: {output_dir}")
     reconstruct_islands_in_directory(base_dir, output_dir)
