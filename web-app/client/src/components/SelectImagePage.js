@@ -6,7 +6,7 @@ import axios from 'axios';
 const SelectImagePage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { islands } = location.state || { islands: [] };
+  const { islands, is_bcc } = location.state || {};
   const baseUrl = 'http://localhost:5001';
 
   const [selectedImage, setSelectedImage] = useState(null);
@@ -18,7 +18,12 @@ const SelectImagePage = () => {
   }, []);
 
   const handleImageSelection = (imageUrl) => {
-    navigate('/progress', { state: { imageUrl } });
+    navigate('/progress', {
+      state: {
+        imageUrl,   // <- selected image
+        is_bcc      // <- keep this flowing
+      }
+    });    
   };
 
   const handleImageError = (imageUrl) => {
