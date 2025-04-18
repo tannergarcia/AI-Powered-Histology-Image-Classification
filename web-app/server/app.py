@@ -13,6 +13,7 @@ from tensorflow.keras.layers import SpatialDropout2D
 from tensorflow.keras.models import Model
 import cv2
 import json
+import csv
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -31,6 +32,42 @@ def get_red_zone_coordinates(heatmap, img_width, img_height, threshold=0.5):
     # Get bounding boxes of contours
     bounding_boxes = [cv2.boundingRect(c) for c in contours]
     return bounding_boxes
+
+
+# Extract polygon coordinates from heatmap
+def get_polygon_coordinates(heatmap, img_width, img_height, threshold=0.5):
+    # Resize heatmap to original image size and rescale
+    heatmap_resized = cv2.resize(heatmap, (img_width, img_height))
+    heatmap_rescaled = np.uint8(255 * heatmap_resized)
+    
+    # Threshold the heatmap to obtain a binary image
+    _, thresh = cv2.threshold(heatmap_rescaled, int(threshold * 255), 255, cv2.THRESH_BINARY)
+    
+    # Find contours from the thresholded image
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    polygons = []
+    for contour in contours:
+        # Use contour perimeter to set approximation
+        epsilon = 0.01 * cv2.arcLength(contour, True)
+        approx = cv2.approxPolyDP(contour, epsilon, True)
+        # Convert contour result to a list of [x, y] points
+        poly = approx.reshape(-1, 2).tolist()
+        polygons.append(poly)
+    return polygons
+
+# Draw and save overlay with polygon boundaries
+def draw_polygon_overlay(img_path, polygons, output_path):
+    img = cv2.imread(img_path)
+    if img is None:
+        print("Error: Could not read image at", img_path)
+        return
+    # Draw each polygon on image
+    for poly in polygons:
+        pts = np.array(poly, dtype=np.int32)
+        # Draw contour
+        cv2.polylines(img, [pts], isClosed=True, color=(0, 0, 255), thickness=2)
+    # Save image
+    cv2.imwrite(output_path, img)
 
 # Directory to save uploaded images
 UPLOAD_FOLDER = 'uploads'
@@ -187,8 +224,32 @@ def predict():
     img_height, img_width = img.shape[:2]
     red_zone_coords = get_red_zone_coordinates(heatmap, img_width, img_height)
 
+
+    # Extract polygon coordinates
+    polygon_coords = get_polygon_coordinates(heatmap, img_width, img_height)
+
+    # File paths for output images and CSV file
+    heatmap_subdir = os.path.join(PROCESSED_FOLDER, unique_id)
+    polygon_overlay_filename = f"polygon_overlay_{filename}"
+    polygon_overlay_path = os.path.join(heatmap_subdir, polygon_overlay_filename)
+    csv_filename = f"polygons_{filename.split('_',1)[-1].split('.')[0]}.csv"
+    csv_filepath = os.path.join(heatmap_subdir, csv_filename)
+    
+    # Create overlay image that draws polygon boundaries
+    draw_polygon_overlay(image_path, polygon_coords, polygon_overlay_path)
+
+    # Generate and save CSV with polygon point
+    with open(csv_filepath, 'w', newline='') as csvfile:
+        csvwriter = csv.writer(csvfile)
+        # Write header (polygon id, point index, x, y)
+        csvwriter.writerow(["polygon_id", "point_index", "x", "y"])
+        for poly_idx, poly in enumerate(polygon_coords):
+            for point_index, point in enumerate(poly):
+                csvwriter.writerow([poly_idx, point_index, point[0], point[1]])
+
+    # Save the heatmap overlaid image
     heatmap_filename = f"heatmap_{filename}"
-    heatmap_path = os.path.join(PROCESSED_FOLDER, unique_id, heatmap_filename)
+    heatmap_path = os.path.join(heatmap_subdir, heatmap_filename)
 
     if heatmap is not None:
         save_and_display_gradcam(image_path, heatmap, cam_path=heatmap_path)
@@ -202,6 +263,9 @@ def predict():
         'prediction': float(prediction[0][0]),
         'label': 'Present' if prediction[0][0] > 0.5 else 'Clear',
         'heatmap_url': heatmap_url,
+        'polygon_overlay_url': f"/processed/{unique_id}/{polygon_overlay_filename}",
+        'polygon_coords': polygon_coords,  # The list of polygon points
+        'csv_url': f"/processed/{unique_id}/{csv_filename}",
         'red_zone_coords': red_zone_coords,
         'image_width': img_width,
         'image_height': img_height

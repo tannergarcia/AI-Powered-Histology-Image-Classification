@@ -17,3 +17,8 @@ logs/
 trained/
 
 node_modules/
+testWebApp/
+*.h5
+processed/
+uploads/
+.DS_Store

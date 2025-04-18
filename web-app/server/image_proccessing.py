@@ -80,6 +80,14 @@ def extract_islands_from_png(image_path, output_dir, max_dimension=1792):
         # Extract the region from the original image
         island_image = image_rgb[y:y+h, x:x+w]
         
+        # Also extract the mask region to check for empty areas
+        mask_region = component_mask[y:y+h, x:x+w]
+        
+        # Use the mask to ensure non-tissue regions are white instead of black
+        island_image_masked = island_image.copy()
+        island_image_masked[mask_region == 0] = [255, 255, 255]  # Set non-tissue to white
+        island_image = island_image_masked
+        
         # Resize to fit into max_dimension x max_dimension canvas
         scaling_factor = min(max_dimension / island_image.shape[1], max_dimension / island_image.shape[0])
         new_width = int(island_image.shape[1] * scaling_factor)
