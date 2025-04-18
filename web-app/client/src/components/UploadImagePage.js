@@ -53,20 +53,23 @@ const UploadImagePage = () => {
     try {
       const formData = new FormData();
       formData.append('file', file);
-
-      // Send the BCC image to the backend
-      const response = await axios.post('http://localhost:5001/upload-bcc', formData);
-
-      // Navigate to SelectImagePage (or wherever you want) with the list of islands
-      navigate('/select-image', { state: { islands: response.data.islands } });
+      formData.append('is_bcc', 'true'); // <-- added this
+  
+      const response = await axios.post('http://localhost:5001/upload', formData);
+  
+      navigate('/select-image', {
+        state: {
+          islands: response.data.islands,
+          is_bcc: true // or false
+        }
+      });
     } catch (error) {
       console.error('Error uploading BCC file:', error);
       setBccFileSelected(false);
-      // Handle error (e.g., show a message to the user)
     } finally {
       setIsUploadingBcc(false);
     }
-  };
+  };  
 
   // ---------------- SCC Handlers ----------------
   const handleSccDrop = async (event) => {
@@ -94,20 +97,24 @@ const UploadImagePage = () => {
     try {
       const formData = new FormData();
       formData.append('file', file);
-
-      // Send the SCC image to the backend
-      const response = await axios.post('http://localhost:5001/upload-scc', formData);
-
-      // Navigate to SelectImagePage (or wherever you want) with the list of islands
-      navigate('/select-image', { state: { islands: response.data.islands } });
+      formData.append('is_bcc', 'false'); // <-- added this
+  
+      const response = await axios.post('http://localhost:5001/upload', formData);
+  
+      navigate('/select-image', {
+        state: {
+          islands: response.data.islands,
+          is_bcc: false // or false
+        }
+      });
     } catch (error) {
       console.error('Error uploading SCC file:', error);
       setSccFileSelected(false);
-      // Handle error (e.g., show a message to the user)
     } finally {
       setIsUploadingScc(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-black text-white relative overflow-hidden">
