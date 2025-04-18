@@ -84,7 +84,7 @@ def draw_polygon_overlay(img_path, polygons, output_path):
     for poly in polygons:
         pts = np.array(poly, dtype=np.int32)
         # Draw contour
-        cv2.polylines(img, [pts], isClosed=True, color=(0, 0, 255), thickness=2)
+        cv2.polylines(img, [pts], isClosed=True, color=(0, 0, 0), thickness=3)
     # Save image
     cv2.imwrite(output_path, img)
 
