@@ -33,6 +33,7 @@ def get_red_zone_coordinates(heatmap, img_width, img_height, threshold=0.5):
     bounding_boxes = [cv2.boundingRect(c) for c in contours]
     return bounding_boxes
 
+
 # Extract polygon coordinates from heatmap
 def get_polygon_coordinates(heatmap, img_width, img_height, threshold=0.5):
     # Resize heatmap to original image size and rescale
@@ -67,14 +68,6 @@ def draw_polygon_overlay(img_path, polygons, output_path):
         cv2.polylines(img, [pts], isClosed=True, color=(0, 0, 255), thickness=2)
     # Save image
     cv2.imwrite(output_path, img)
-
-# Load the model
-MODEL_PATH = '/Users/tannergarcia/Documents/school/semester8/seniorProj/AI-Powered-Histology-Image-Classification-1/model/after_finetuning_new_SCC_model.h5'
-model = load_model(MODEL_PATH, custom_objects={"SpatialDropout2D": SpatialDropout2D})
-
-last_conv_layer_name = 'conv2d_2'
-last_conv_layer = model.get_layer(last_conv_layer_name)
-model_with_conv_outputs = Model(inputs=model.input, outputs=[last_conv_layer.output, model.output])
 
 # Directory to save uploaded images
 UPLOAD_FOLDER = 'uploads'
@@ -144,6 +137,16 @@ def upload_and_process():
     if file.filename == '':
         return jsonify({'error': 'No file selected'}), 400
 
+    is_bcc_str = request.form.get('is_bcc', 'true').lower()
+    is_bcc = is_bcc_str == 'true'
+
+    model_path = 'bcc_2.h5' if is_bcc else 'scc.h5'
+    model = load_model(model_path, custom_objects={"SpatialDropout2D": SpatialDropout2D})
+
+    last_conv_layer_name = 'conv2d_2'  # Update this if different between models
+    last_conv_layer = model.get_layer(last_conv_layer_name)
+    model_with_conv_outputs = Model(inputs=model.input, outputs=[last_conv_layer.output, model.output])
+
     # Save the uploaded file
     filename = secure_filename(file.filename)
     unique_id = str(uuid.uuid4())
@@ -156,14 +159,11 @@ def upload_and_process():
     os.makedirs(output_subdir, exist_ok=True)
     extract_islands_from_png(file_path, output_subdir)
 
-    # Get list of processed images
     island_filenames = [f for f in os.listdir(output_subdir) if f.endswith('.png')]
     island_urls = [f"/processed/{unique_id}/{fname}" for fname in island_filenames]
 
-    # Clean up the uploaded file if needed
-    # os.remove(file_path)
-
     return jsonify({'islands': island_urls, 'id': unique_id})
+
 
 @app.route('/processed/<unique_id>/<filename>')
 @cross_origin(origins=['http://localhost:3000'])
@@ -174,32 +174,56 @@ def serve_processed_image(unique_id, filename):
 @cross_origin(origins=['http://localhost:3000'])
 def predict():
     data = request.json
+
+    print("Received /predict request")
+    print("Payload:", json.dumps(data, indent=2))
+
     image_url = data.get('image_url')
+    is_bcc_raw = data.get('is_bcc', True)
+    is_bcc = str(is_bcc_raw).lower() == 'true' if isinstance(is_bcc_raw, str) else bool(is_bcc_raw)
+
+    print("Decoded Inputs:")
+    print(f"  image_url: {image_url}")
+    print(f"  is_bcc: {is_bcc} (raw: {is_bcc_raw})")
+
     if not image_url:
+        print("Error: Missing image_url in request")
         return jsonify({'error': 'No image URL provided'}), 400
 
-    # Extract the unique_id and filename from the image_url
+    model_path = 'bcc_2.h5' if is_bcc else 'scc.h5'
+    print(f"Loading model from: {model_path}")
+    model = load_model(model_path, custom_objects={"SpatialDropout2D": SpatialDropout2D})
+
+    last_conv_layer_name = 'conv2d_2'
+    last_conv_layer = model.get_layer(last_conv_layer_name)
+    model_with_conv_outputs = Model(inputs=model.input, outputs=[last_conv_layer.output, model.output])
+    print("Model loaded.")
+
     parts = image_url.strip('/').split('/')
     if len(parts) != 3:
+        print("Error: Invalid image_url structure:", parts)
         return jsonify({'error': 'Invalid image URL'}), 400
+
     _, unique_id, filename = parts
     image_path = os.path.join(PROCESSED_FOLDER, unique_id, filename)
 
-    # Preprocess the image
+    print(f"Image path: {image_path}")
+    if not os.path.exists(image_path):
+        print("Error: Image not found on disk.")
+        return jsonify({'error': 'Image not found'}), 404
+
+    print("Running prediction...")
     img_array = preprocess_image(image_path)
-
-    # Make prediction
     prediction = model.predict(img_array)
+    print(f"Prediction score: {prediction[0][0]}")
 
-    # Generate Grad-CAM heatmap
+    print("Generating Grad-CAM heatmap...")
     heatmap = make_gradcam_heatmap(img_array, model_with_conv_outputs)
 
-    # Get original image dimensions
     img = cv2.imread(image_path)
     img_height, img_width = img.shape[:2]
-
-    # Process heatmap to find red zones
     red_zone_coords = get_red_zone_coordinates(heatmap, img_width, img_height)
+
 
     # Extract polygon coordinates
     polygon_coords = get_polygon_coordinates(heatmap, img_width, img_height)
@@ -226,13 +250,15 @@ def predict():
     # Save the heatmap overlaid image
     heatmap_filename = f"heatmap_{filename}"
     heatmap_path = os.path.join(heatmap_subdir, heatmap_filename)
+
     if heatmap is not None:
         save_and_display_gradcam(image_path, heatmap, cam_path=heatmap_path)
         heatmap_url = f"/processed/{unique_id}/{heatmap_filename}"
+        print(f"Heatmap saved: {heatmap_url}")
     else:
         heatmap_url = None
+        print("No heatmap generated.")
 
-    # Prepare response
     result = {
         'prediction': float(prediction[0][0]),
         'label': 'Present' if prediction[0][0] > 0.5 else 'Clear',
@@ -244,6 +270,7 @@ def predict():
         'image_width': img_width,
         'image_height': img_height
     }
+
     return jsonify(result)
 
 if __name__ == '__main__':
