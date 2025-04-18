@@ -99,20 +99,20 @@ const PredictionsPage = () => {
               {/* Heatmap */}
               {result.heatmap_url && (
                 <div>
-                  <p className="text-xl text-gray-400 mb-4">Grad‑CAM Heatmap</p>
+                  <p className="text-xl text-gray-400 mb-4">Color Heatmap</p>
                   <div
                     className="relative w-80 h-80 cursor-pointer"
                     onMouseEnter={() => setIsHeatmapHovered(true)}
                     onMouseLeave={() => setIsHeatmapHovered(false)}
                     onClick={() => {
                       setModalImageUrl(`${baseUrl}${result.heatmap_url}`);
-                      setModalAltText('Grad‑CAM Heatmap');
+                      setModalAltText('Color Heatmap');
                       setIsModalOpen(true);
                     }}
                   >
                     <img
                       src={`${baseUrl}${result.heatmap_url}`}
-                      alt="Grad‑CAM Heatmap"
+                      alt="Color Heatmap"
                       className="w-full h-full object-cover rounded-3xl shadow-2xl transform transition-transform duration-500 hover:scale-105"
                     />
                     {!isHeatmapHovered &&
@@ -134,6 +134,27 @@ const PredictionsPage = () => {
                           </div>
                         );
                       })}
+                  </div>
+                </div>
+              )}
+
+              {/* Polygon */}
+              {result.polygon_overlay_url && (
+                <div>
+                  <p className="text-xl text-gray-400 mb-4">Polygon Heatmap</p>
+                  <div
+                    className="relative w-80 h-80 cursor-pointer"
+                    onClick={() => {
+                      setModalImageUrl(`${baseUrl}${result.polygon_overlay_url}`);
+                      setModalAltText('Polygon Heatmap');
+                      setIsModalOpen(true);
+                    }}
+                  >
+                    <img
+                      src={`${baseUrl}${result.polygon_overlay_url}`}
+                      alt="Polygon Heatmap"
+                      className="w-full h-full object-cover rounded-3xl shadow-2xl transform transition-transform duration-500 hover:scale-105"
+                    />
                   </div>
                 </div>
               )}
@@ -167,6 +188,12 @@ const PredictionsPage = () => {
                 className="border border-gray-500 hover:border-gray-400 text-gray-300 hover:text-white px-8 py-4 rounded-xl text-xl font-semibold transition-all duration-300 transform hover:scale-105"
               >
                 Download Report
+              </button>
+              <button
+                onClick={() => window.open(`${baseUrl}/${result.csv_url}`, '_blank')}
+                className="border border-gray-500 hover:border-gray-400 text-gray-300 hover:text-white px-8 py-4 rounded-xl text-xl font-semibold transition-all duration-300 transform hover:scale-105"
+              >
+                Download Polygon CSV
               </button>
             </div>
           </div>
