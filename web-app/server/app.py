@@ -20,6 +20,25 @@ app = Flask(__name__)
 # Allow CORS for specific origins
 CORS(app, resources={r"/*": {"origins": ["http://localhost:3000"]}}, supports_credentials=True)
 
+# load both models at the start
+BCC_PATH = 'bcc_2.h5'
+SCC_PATH = 'lower_val_set_new_SCC_model.h5'
+last_conv_layer_name = 'conv2d_2'
+
+# bcc
+print("Loading BCC model...")
+bcc_model = load_model(BCC_PATH, custom_objects={"SpatialDropout2D": SpatialDropout2D})
+bcc_last_conv_layer = bcc_model.get_layer(last_conv_layer_name)
+bcc_model_with_conv_outputs = Model(inputs=bcc_model.input, outputs=[bcc_last_conv_layer.output, bcc_model.output])
+print("BCC model loaded.")
+
+# scc
+print("Loading SCC model...")
+scc_model = load_model(SCC_PATH, custom_objects={"SpatialDropout2D": SpatialDropout2D})
+scc_last_conv_layer = scc_model.get_layer(last_conv_layer_name)
+scc_model_with_conv_outputs = Model(inputs=scc_model.input, outputs=[scc_last_conv_layer.output, scc_model.output])
+print("SCC model loaded.")
+
 def get_red_zone_coordinates(heatmap, img_width, img_height, threshold=0.5):
     # Resize heatmap to original image size
     heatmap_resized = cv2.resize(heatmap, (img_width, img_height))
@@ -140,12 +159,6 @@ def upload_and_process():
     is_bcc_str = request.form.get('is_bcc', 'true').lower()
     is_bcc = is_bcc_str == 'true'
 
-    model_path = 'bcc_2.h5' if is_bcc else 'scc.h5'
-    model = load_model(model_path, custom_objects={"SpatialDropout2D": SpatialDropout2D})
-
-    last_conv_layer_name = 'conv2d_2'  # Update this if different between models
-    last_conv_layer = model.get_layer(last_conv_layer_name)
-    model_with_conv_outputs = Model(inputs=model.input, outputs=[last_conv_layer.output, model.output])
 
     # Save the uploaded file
     filename = secure_filename(file.filename)
@@ -190,14 +203,9 @@ def predict():
         print("Error: Missing image_url in request")
         return jsonify({'error': 'No image URL provided'}), 400
 
-    model_path = 'bcc_2.h5' if is_bcc else 'scc.h5'
-    print(f"Loading model from: {model_path}")
-    model = load_model(model_path, custom_objects={"SpatialDropout2D": SpatialDropout2D})
-
-    last_conv_layer_name = 'conv2d_2'
-    last_conv_layer = model.get_layer(last_conv_layer_name)
-    model_with_conv_outputs = Model(inputs=model.input, outputs=[last_conv_layer.output, model.output])
-    print("Model loaded.")
+    model = bcc_model if is_bcc else scc_model
+    model_with_conv_outputs = bcc_model_with_conv_outputs if is_bcc else scc_model_with_conv_outputs
+    print(f"Using model: {'BCC' if is_bcc else 'SCC'}")
 
     parts = image_url.strip('/').split('/')
     if len(parts) != 3:
