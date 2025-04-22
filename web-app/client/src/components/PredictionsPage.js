@@ -55,7 +55,7 @@ const PredictionsPage = () => {
             <ArrowLeft className="w-6 h-6" />
             <span className="font-medium">Back</span>
           </button>
-          <div className="text-gray-300 font-medium">Gator Vision</div>
+          <div className="text-gray-300 font-medium">GatorVision</div>
         </nav>
 
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-24">
@@ -73,7 +73,7 @@ const PredictionsPage = () => {
                 <div className="mt-4 text-gray-200 text-sm">
                   Model used:{' '}
                   <span className="font-semibold">
-                    {is_bcc ? 'BCC (Basal Cell Carcinoma)' : 'SCC (Squamous Cell Carcinoma)'}
+                    {is_bcc ? 'BCC' : 'SCC'}
                   </span>
                 </div>
               </div>
@@ -97,7 +97,7 @@ const PredictionsPage = () => {
               </div>
 
               {/* Heatmap */}
-              {result.heatmap_url && (
+              {result.label === 'Present' && result.heatmap_url && (
                 <div>
                   <p className="text-xl text-gray-400 mb-4">Color Heatmap</p>
                   <div
@@ -139,20 +139,20 @@ const PredictionsPage = () => {
               )}
 
               {/* Polygon */}
-              {result.polygon_overlay_url && (
+              {result.label === 'Present' && result.polygon_overlay_url && (
                 <div>
-                  <p className="text-xl text-gray-400 mb-4">Polygon Heatmap</p>
+                  <p className="text-xl text-gray-400 mb-4">Polygon Interest Regions</p>
                   <div
                     className="relative w-80 h-80 cursor-pointer"
                     onClick={() => {
                       setModalImageUrl(`${baseUrl}${result.polygon_overlay_url}`);
-                      setModalAltText('Polygon Heatmap');
+                      setModalAltText('Polygon Interest Regions');
                       setIsModalOpen(true);
                     }}
                   >
                     <img
                       src={`${baseUrl}${result.polygon_overlay_url}`}
-                      alt="Polygon Heatmap"
+                      alt="Polygon Interest Regions"
                       className="w-full h-full object-cover rounded-3xl shadow-2xl transform transition-transform duration-500 hover:scale-105"
                     />
                   </div>
@@ -189,18 +189,20 @@ const PredictionsPage = () => {
               >
                 Download Report
               </button>
-              <button
+              {result.label === 'Present' && result.polygon_overlay_url && (
+                <button
                 onClick={() => window.open(`${baseUrl}/${result.csv_url}`, '_blank')}
                 className="border border-gray-500 hover:border-gray-400 text-gray-300 hover:text-white px-8 py-4 rounded-xl text-xl font-semibold transition-all duration-300 transform hover:scale-105"
               >
                 Download Polygon CSV
               </button>
+              )}
             </div>
           </div>
         </div>
 
         <footer className="py-6 text-center text-gray-500 text-sm">
-          © {new Date().getFullYear()} Gator Vision
+          © {new Date().getFullYear()} GatorVision
         </footer>
       </div>
 

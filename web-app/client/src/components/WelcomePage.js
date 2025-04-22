@@ -29,11 +29,11 @@ const WelcomePage = () => {
       <div className="relative min-h-screen backdrop-blur-xl flex items-center justify-center">
         <div className="max-w-7xl mx-auto px-8 text-center">
         <h1 className="text-7xl sm:text-8xl lg:text-9xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-blue-400 animate-gradient-text bg-clip-text text-transparent tracking-tight leading-tight mb-12">
-            Gator Vision
+            GatorVision
           </h1>
           
           <p className="text-gray-400 text-1xl sm:text-2xl lg:text-3xl max-w-5xl mx-auto mb-16 leading-relaxed">
-            Revolutionizing basal cell carcinoma detection through advanced artificial intelligence. 
+            Revolutionizing skin cancer detection through advanced artificial intelligence. 
             Experience precise, rapid, and reliable pathology slide analysis.
           </p>
 
