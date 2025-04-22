@@ -61,7 +61,7 @@ const SelectImagePage = () => {
             <ArrowLeft className="w-6 h-6" />
             <span className="font-medium">Back</span>
           </button>
-          <div className="text-gray-300 font-medium">Gator Vision</div>
+          <div className="text-gray-300 font-medium">GatorVision</div>
         </nav>
 
         {/* Main Content */}

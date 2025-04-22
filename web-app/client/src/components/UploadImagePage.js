@@ -146,7 +146,7 @@ const UploadImagePage = () => {
             <ArrowLeft className="w-6 h-6" />
             <span className="font-medium">Back</span>
           </button>
-          <div className="text-gray-300 font-medium">Gator Vision</div>
+          <div className="text-gray-300 font-medium">GatorVision</div>
         </nav>
 
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-24">
