@@ -21,8 +21,8 @@ app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": ["http://localhost:3000"]}}, supports_credentials=True)
 
 # load both models at the start
-BCC_PATH = 'bcc_2.h5'
-SCC_PATH = 'lower_val_set_new_SCC_model.h5'
+BCC_PATH = 'bcc.h5'
+SCC_PATH = 'scc.h5'
 last_conv_layer_name = 'conv2d_2'
 
 # bcc
