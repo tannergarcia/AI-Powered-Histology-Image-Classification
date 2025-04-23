@@ -3,7 +3,7 @@
 #SBATCH --job-name=image_reconstruction
 #SBATCH --output=logs/image_reconstruction_%j.out
 #SBATCH --error=logs/image_reconstruction_%j.err
-#SBATCH --mail-user=tannergarcia@ufl.edu
+#SBATCH --mail-user=user@ufl.edu # insert your email to receive notifications, or remove this line
 #SBATCH --mail-type=ALL
 #SBATCH --time=01:00:00                # Adjust as needed
 #SBATCH --mem=64G                     # Adjust memory as needed
